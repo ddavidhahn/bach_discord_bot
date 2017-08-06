@@ -21,10 +21,6 @@ After this you should have access to your bot's authentication token. You can vi
 }
 ```
 
-Finally, you need to set up the database. Run couchdb simply by executing `couchdb` in the command line. Then go to http://localhost:5984/_utils/.
-
-Click `Create new database` and make the name `bach-bot-db`.
-
 ## Initialize
 
 You need to start by running couchdb which holds all the relevant playlist and music information.

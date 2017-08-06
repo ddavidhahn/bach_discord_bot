@@ -1,0 +1,32 @@
+# Bach Discord Bot
+
+Bach is a bot for discord which allows users to customize music playlists and play music in Discord Server voice channels.
+
+## Setup
+
+You should install the required applications and packages before trying to
+run the bot.
+
+```
+./install_requirements
+```
+
+You also need to create an application on the Discord developer portal. There are some handy instructions for this [here](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
+
+After this you receive 
+
+## Initialize
+
+You need to start by running couchdb which holds all the relevant playlist and music information.
+
+```
+couchdb
+```
+
+Then you can start the bot up.
+
+```
+node bot.js
+```
+
+## Commands

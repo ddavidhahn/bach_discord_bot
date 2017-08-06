@@ -3,8 +3,21 @@ var logger = require('winston');
 var auth = require('./auth.json');
 var settings = require('./settings.js');
 var nano = require('nano')('http://localhost:5984');
-var test_db = nano.db.use('bach-bot-db');
-var d = new Date();
+
+// Configure couchdb
+nano.db.get('bach-bot-db', function(err, body) {
+    if (!err) {
+        logger.info('bach-bot-db already exists. Continuing execution...');
+    } else {
+        logger.info('bach-bot-db does not exist. Creating it...');
+        nano.db.create('bach-bot-db', function(err, body) {
+            if (!err) {
+                logger.info('Database bach-bot-db created!');
+            }
+        });
+    }
+});
+var bachBotDB = nano.db.use('bach-bot-db');
 
 // Configure logger settings
 logger.remove(logger.transports.Console);
@@ -84,10 +97,6 @@ var findChannelIDGivenName = function (targetBot, serverID, targetChannelName) {
     var channelsDictionary = targetBot.channels;
     for (var channelKey in channelsDictionary) {
         var channelEntry = channelsDictionary[channelKey];
-        // console.log(channelEntry.name);
-        // console.log(targetChannelName);
-        // console.log(channelEntry.guild_id);
-        // console.log(serverID);
         if (channelEntry.name == targetChannelName && channelEntry.guild_id == serverID) {
             return channelEntry.id;
         }

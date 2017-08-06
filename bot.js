@@ -1,9 +1,11 @@
+const Discord = require('discord.js');
+const ytdl = require('ytdl-core');
+const streamOptions = { seek: 0, volume: 1 };
+
 var auth = require('./auth.json');
-var Discord = require('discord.io');
 var logger = require('winston');
 var nano = require('nano')('http://localhost:5984');
 var settings = require('./settings.js');
-var ytaStream = require('youtube-audio-stream');
 
 // Configure couchdb
 nano.db.get('bach-bot-db', function(error, body) {
@@ -28,109 +30,67 @@ logger.add(logger.transports.Console, {
 logger.level = 'debug';
 
 // Initialize Discord Bot
-var bot = new Discord.Client({
-   token: auth.token,
-   autorun: true
-});
+var bot = new Discord.Client();
+bot.login(auth.token);
 
 bot.on('ready', function (evt) {
     logger.info('Connected');
     logger.info('Logged in as: ');
-    logger.info(bot.username + ' - (' + bot.id + ')');
+    logger.info(bot.user.username + ' - (' + bot.user.id + ')');
 });
 
-bot.on('message', function (user, userID, channelID, message, evt) {
-
+bot.on('message', message => {
     // Only listen on specified channels
     if (settings.listenOnChannels.length == 0 ||
         settings.listenOnChannels.indexOf(channelID) > -1) {
-        if (message.length >= settings.triggerPhrase.length &&
-            message.substring(0, settings.triggerPhrase.length) == settings.triggerPhrase) {
 
-            var args = message.split(' ');
+        // Check for trigger phrase for bot commands
+        var messageContent = message.content;
+        if (messageContent.length >= settings.triggerPhrase.length &&
+            messageContent.substring(0, settings.triggerPhrase.length) == settings.triggerPhrase) {
+
+            var args = messageContent.split(' ');
             var cmd = args[1];
 
             args = args.splice(1);
             switch(cmd) {
                 case 'goto':
-                    var targetChannelName = args[1];
-                    enterVoiceChannel(bot, channelID, targetChannelName, function (error, events) {
-                        if (!error) {
-                            logger.info('Joined ' + targetChannelName);
-                        } else {
-                            logger.info('Failed to join ' + targetChannelName);
-                        }
-                    });
-                    break;
-                case 'play':
-                    var targetChannelName = args[1];
-                    var targetUrl = args[2];
-                    enterVoiceChannel(bot, channelID, targetChannelName, function(channelID) {
-                        // Get the audio context
-                        bot.getAudioContext(channelID, function(error, s) {
-                            //Once again, check to see if any errors exist
-                            if (error) return console.error(error);
+                    if (!message.guild) return;
 
-                            logger.info('Starting to play audio for ' + targetUrl + ' at ' + channelID);
-                            ytaStream(targetUrl).pipe(s, {end: false});
-
-                            //The stream fires `done` when it's got nothing else to send to Discord.
-                            s.on('done', function() {
-                               logger.info('Done playing audio for ' + targetUrl);
-                            });
-                        });
-                    });
                     break;
-                case 'hi':
-                    bot.sendMessage({
-                        to : channelID,
-                        message: "Hello :pizza:",
-                        typing: true
+                case 'come':
+                    if (!message.guild) return;
+                    if (message.member.voiceChannel) {
+                        message.member.voiceChannel.join()
+                            .then(connection => { // Connection is an instance of VoiceConnection
+                                message.reply('I have successfully connected to the channel!');
+                            })
+                    }
+                    break;
+                case 'leave':
+                    if (!message.guild) return;
+                    if (message.member.voiceChannel) {
+                        message.member.voiceChannel.leave();
+                    }
+                    break;
+                case 'leave-all':
+                    bot.voiceConnections.forEach(function (connection, connectionID) {
+                        connection.channel.leave();
                     })
                     break;
-            // Just add any case commands if you want to..
+                case 'play':
+                    var memberVoiceConnection = bot.voiceConnections.find(vc => vc.channel.equals(message.member.voiceChannel));
+                    if (memberVoiceConnection != undefined)
+                        var stream = ytdl('https://www.youtube.com/watch?v=U1ei5rwO7ZI', { filter : 'audioonly' });
+                        var dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
+                    break;
+                case 'hi':
+                    message.reply("Hi, here's  a pizza -> :pizza:")
+                        .then(msg => console.log(`Sent a reply to ${msg.author}`))
+                        .catch(console.error);
+                    break;
+            // Just add any case commands if you want to..®
             }
         }
     }
 });
-
-var enterVoiceChannel = function (targetBot,
-    sourceChannelID,
-    targetChannelName,
-    callback) {
-
-    var serverID = findServerGivenChannelID(targetBot, sourceChannelID);
-    if (serverID != null) {
-        var destinationChannelID = findChannelIDGivenName(targetBot, serverID, targetChannelName);
-    }
-
-    if (destinationChannelID != null) {
-        targetBot.joinVoiceChannel(destinationChannelID, function (error, events) {
-
-            //Check to see if any errors happen while joining.
-            if (error) return console.error(error);
-
-            callback(destinationChannelID);
-        });
-    }
-}
-
-var findServerGivenChannelID = function (targetBot, channelID) {
-    var channelsDictionary = targetBot.channels;
-    var channelEntry = channelsDictionary[channelID];
-    if (channelEntry != undefined) {
-        return channelEntry.guild_id;
-    }
-    return null;
-};
-
-var findChannelIDGivenName = function (targetBot, serverID, targetChannelName) {
-    var channelsDictionary = targetBot.channels;
-    for (var channelKey in channelsDictionary) {
-        var channelEntry = channelsDictionary[channelKey];
-        if (channelEntry.name == targetChannelName && channelEntry.guild_id == serverID) {
-            return channelEntry.id;
-        }
-    }
-    return null;
-};

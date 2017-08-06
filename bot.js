@@ -6,6 +6,13 @@ var auth = require('./auth.json');
 var logger = require('winston');
 var nano = require('nano')('http://localhost:5984');
 var settings = require('./settings.js');
+var youtubedl = require('youtube-dl');
+var youtubedlOptions = ['--username=user', '--password=hunter2'];
+
+// Stream globals
+var stream;
+var dispatcher;
+var queue = [];
 
 // Configure couchdb
 nano.db.get('bach-bot-db', function(error, body) {
@@ -42,7 +49,7 @@ bot.on('ready', function (evt) {
 bot.on('message', message => {
     // Only listen on specified channels
     if (settings.listenOnChannels.length == 0 ||
-        settings.listenOnChannels.indexOf(channelID) > -1) {
+        settings.listenOnChannels.indexOf(message.channel.id) > -1) {
 
         // Check for trigger phrase for bot commands
         var messageContent = message.content;
@@ -56,13 +63,18 @@ bot.on('message', message => {
             switch(cmd) {
                 case 'goto':
                     if (!message.guild) return;
-
+                    var channelName = args[1];
+                    var channel = message.guild.channels.find('name', channelName);
+                    channel.join()
+                        .then(connection => {
+                            message.reply('I have successfully connected to the channel!');
+                        })
                     break;
                 case 'come':
                     if (!message.guild) return;
                     if (message.member.voiceChannel) {
                         message.member.voiceChannel.join()
-                            .then(connection => { // Connection is an instance of VoiceConnection
+                            .then(connection => {
                                 message.reply('I have successfully connected to the channel!');
                             })
                     }
@@ -81,8 +93,35 @@ bot.on('message', message => {
                 case 'play':
                     var memberVoiceConnection = bot.voiceConnections.find(vc => vc.channel.equals(message.member.voiceChannel));
                     if (memberVoiceConnection != undefined)
-                        var stream = ytdl('https://www.youtube.com/watch?v=U1ei5rwO7ZI', { filter : 'audioonly' });
-                        var dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
+                        if (dispatcher != null && dispatcher.paused) {
+                            dispatcher.resume();
+                        } else {
+                            if (queue.length == 0) {
+                                message.reply('The queue is empty! Add songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
+                            } else {
+                                var url = queue.shift();
+
+                                // First get the video title then play the song
+                                youtubedl.getInfo(url, function(err, info) {
+                                    if (err) throw err;
+                                    message.channel.send('Now playing \"' + info.title + '\"');
+
+                                    stream = ytdl(url, { filter : 'audioonly' });
+                                    dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
+                                });
+                            }
+                        }
+                    break;
+                case 'pause':
+                    dispatcher.pause();
+                    break;
+                case 'queue':
+                    var url = args[1];
+                    if (url != null && url != '') {
+                        queue.push(url);
+                    } else {
+                        message.reply('You should include a url after \'' + settings.triggerPhrase + '\'');
+                    }
                     break;
                 case 'hi':
                     message.reply("Hi, here's  a pizza -> :pizza:")

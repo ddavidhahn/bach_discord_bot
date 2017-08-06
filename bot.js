@@ -1,13 +1,20 @@
+// Include packages
 const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 const streamOptions = { seek: 0, volume: 1 };
 
-var auth = require('./auth.json');
+var bodyParser = require('body-parser');
+var express = require('express');
 var logger = require('winston');
 var nano = require('nano')('http://localhost:5984');
-var settings = require('./settings.js');
+var path = require('path');
+
 var youtubedl = require('youtube-dl');
 var youtubedlOptions = ['--username=user', '--password=hunter2'];
+
+// Include file information
+var auth = require('./auth.json');
+var settings = require('./settings.js');
 
 // Stream globals
 var stream;
@@ -40,6 +47,26 @@ var queue = [{
     'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
     'title' : 'Nickelstats'
 }];
+
+// Configure express setup
+var app = express();
+var arr  = [];
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'ui')));
+
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname + '/ui/index.html'));
+});
+
+app.post('/endpoint', function(req, res){
+	var obj = {};
+	console.log('body: ' + JSON.stringify(req.body));
+	res.send(req.body);
+});
+
+app.listen(settings.listenOnPort);
 
 // Configure couchdb
 nano.db.get('bach-bot-db', function(error, body) {
@@ -173,7 +200,6 @@ bot.on('message', message => {
 });
 
 var playNextSong = function (memberVoiceConnection, message) {
-    console.log('Called playNextSong');
     if (dispatcher != null && dispatcher.paused) {
         dispatcher.resume();
     } else {
@@ -187,7 +213,6 @@ var playNextSong = function (memberVoiceConnection, message) {
 
 // TODO: fix problems with replying (queue is off by 1)
 var initiateStream = function (memberVoiceConnection, message) {
-    console.log('Called initiateStream');
     if (queue.length == 0) {
         message.reply('The queue is empty! Add songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
     } else {
@@ -198,7 +223,7 @@ var initiateStream = function (memberVoiceConnection, message) {
         stream = ytdl(url, { filter : 'audioonly' });
         dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
         dispatcher.on('end', (reason) => {
-            // NOTE: Very hacky way to get around issue at https://github.com/hydrabolt/discord.js/issues/1387®
+            // NOTE: Very hacky way to get around issue at https://github.com/hydrabolt/discord.js/issues/1387
             setTimeout(function () {
                 initiateStream(memberVoiceConnection, message);
             }, 1000);

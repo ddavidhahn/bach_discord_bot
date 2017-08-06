@@ -1,4 +1,5 @@
 module.exports = {
   listenOnChannels : [],
-  triggerPhrase : "@bach"
+  triggerPhrase : "@bach",
+  listenOnPort: 3000
 };

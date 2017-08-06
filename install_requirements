@@ -39,6 +39,7 @@ if [ "$i_node_packages" = true ] ; then
 	npm install discord.io
 	npm install node-schedule
 	npm install winston
+	npm install youtube-audio-stream
 fi
 
 # Install couchdb

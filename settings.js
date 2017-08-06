@@ -1,3 +1,4 @@
 module.exports = {
-  listenOnChannels :[]
+  listenOnChannels : [],
+  triggerPhrase : "!bach"
 };

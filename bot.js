@@ -3,6 +3,7 @@ var logger = require('winston');
 var auth = require('./auth.json');
 var settings = require('./settings.js');
 var nano = require('nano')('http://localhost:5984');
+var test_db = nano.db.use('bach-bot-db');
 var d = new Date();
 
 // Configure logger settings
@@ -24,29 +25,35 @@ bot.on('ready', function (evt) {
     logger.info(bot.username + ' - (' + bot.id + ')');
 });
 
-var triggerPhrase = "!bach"
 bot.on('message', function (user, userID, channelID, message, evt) {
 
     // Only listen on specified channels
-    if (settings.listenOnChannels.indexOf(channelID) > -1) {
-      if (message.length >= triggerPhrase.length &&
-          message.substring(0, triggerPhrase.length) == triggerPhrase) {
+    if (settings.listenOnChannels.length == 0 ||
+        settings.listenOnChannels.indexOf(channelID) > -1) {
+        if (message.length >= settings.triggerPhrase.length &&
+            message.substring(0, settings.triggerPhrase.length) == settings.triggerPhrase) {
 
-          var args = message.split(' ');
-          var cmd = args[1];
+            var args = message.split(' ');
+            var cmd = args[1];
 
-          args = args.splice(1);
-          switch(cmd) {
-              case 'goto':
-                  var targetChannelName = args[1];
-                  enterVoiceChannel(bot, channelID, targetChannelName, function () {
-                     console.log('Joined ' + targetChannelName);
-                  });
-                  break;
-              // Just add any case commands if you want to..
-           }
-       }
-     }
+            args = args.splice(1);
+            switch(cmd) {
+                case 'goto':
+                    var targetChannelName = args[1];
+                    enterVoiceChannel(bot, channelID, targetChannelName, function () {
+                    console.log('Joined ' + targetChannelName);
+                    });
+                    break;
+                case 'hi':
+                    bot.sendMessage({
+                        to : channelID,
+                        message: "Hello :pizza:",
+                        typing: true
+                    })
+            // Just add any case commands if you want to..
+            }
+        }
+    }
 });
 
 var enterVoiceChannel = function (targetBot,

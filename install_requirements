@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+verbose='false'
+first_run=true
+i_homebrew=true
+i_node=true
+i_node_packages=true
+i_couchdb=true
+
+while getopts 'chnp' flag; do
+	if [ "$first_run" = true ] ; then
+		i_homebrew=false
+		i_node=false=false
+		i_node_packages=false
+		i_couchdb=false
+		first_run=false
+	fi
+
+  	case "${flag}" in
+    	c) i_couchdb=true ;;
+    	h) i_homebrew=true ;;
+    	n) i_node=true ;;
+    	p) i_node_packages=true ;;
+	esac
+done
+
+# Install homebrew
+if [ "$i_homebrew" = true ] ; then
+	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+# Install nodejs
+if [ "$i_node" = true ] ; then
+	brew install node
+fi
+
+# Install nodejs packages
+if [ "$i_node_packages" = true ] ; then
+	npm install discord.io
+	npm install node-schedule
+	npm install winston
+fi
+
+# Install couchdb
+if [ "$i_couchdb" = true ] ; then
+	brew install couchdb
+fi

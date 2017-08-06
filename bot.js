@@ -12,7 +12,34 @@ var youtubedlOptions = ['--username=user', '--password=hunter2'];
 // Stream globals
 var stream;
 var dispatcher;
-var queue = [];
+var queue = [{
+    'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
+    'title' : 'Nickelstats'
+}, {
+    'url' : "https://www.youtube.com/watch?v=1Bix44C1EzY",
+    'title' : 'Congratulations!!!'
+}, {
+    'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
+    'title' : 'Nickelstats'
+}, {
+    'url' : "https://www.youtube.com/watch?v=1Bix44C1EzY",
+    'title' : 'Congratulations!!!'
+}, {
+    'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
+    'title' : 'Nickelstats'
+}, {
+    'url' : "https://www.youtube.com/watch?v=1Bix44C1EzY",
+    'title' : 'Congratulations!!!'
+}, {
+    'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
+    'title' : 'Nickelstats'
+}, {
+    'url' : "https://www.youtube.com/watch?v=1Bix44C1EzY",
+    'title' : 'Congratulations!!!'
+}, {
+    'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
+    'title' : 'Nickelstats'
+}];
 
 // Configure couchdb
 nano.db.get('bach-bot-db', function(error, body) {
@@ -24,6 +51,7 @@ nano.db.get('bach-bot-db', function(error, body) {
             if (!error) {
                 logger.info('Database bach-bot-db created!');
             }
+            logger.info(error);
         });
     }
 });
@@ -82,6 +110,7 @@ bot.on('message', message => {
                 case 'leave':
                     if (!message.guild) return;
                     if (message.member.voiceChannel) {
+                        // TODO: Need to add error checking here for ending while dispatcher is playing
                         message.member.voiceChannel.leave();
                     }
                     break;
@@ -90,27 +119,23 @@ bot.on('message', message => {
                         connection.channel.leave();
                     })
                     break;
+                case 'list':
+                    var playlistString = 'Currently queued songs:\n';
+                    if (queue.length > 0) {
+                        var counter = 1;
+                        queue.forEach(function (entry) {
+                            playlistString += counter.toString() + '. ' + entry['title'] + '\n';
+                            counter += 1;
+                        });
+                        message.reply(playlistString);
+                    } else {
+                        message.reply(playlistString + 'Empty!\nAdd songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
+                    }
+                    break;
                 case 'play':
                     var memberVoiceConnection = bot.voiceConnections.find(vc => vc.channel.equals(message.member.voiceChannel));
                     if (memberVoiceConnection != undefined)
-                        if (dispatcher != null && dispatcher.paused) {
-                            dispatcher.resume();
-                        } else {
-                            if (queue.length == 0) {
-                                message.reply('The queue is empty! Add songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
-                            } else {
-                                var url = queue.shift();
-
-                                // First get the video title then play the song
-                                youtubedl.getInfo(url, function(err, info) {
-                                    if (err) throw err;
-                                    message.channel.send('Now playing \"' + info.title + '\"');
-
-                                    stream = ytdl(url, { filter : 'audioonly' });
-                                    dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
-                                });
-                            }
-                        }
+                        playNextSong(memberVoiceConnection, message);
                     break;
                 case 'pause':
                     dispatcher.pause();
@@ -118,10 +143,23 @@ bot.on('message', message => {
                 case 'queue':
                     var url = args[1];
                     if (url != null && url != '') {
-                        queue.push(url);
+                        youtubedl.getInfo(url, function(err, info) {
+                            if (err) {
+                                message.reply("I couldn't access that youtube link :'('");
+                            } else {
+                                queue.push({
+                                    'url': url,
+                                    'title': info.title
+                                });
+                            }
+                        });
                     } else {
                         message.reply('You should include a url after \'' + settings.triggerPhrase + '\'');
                     }
+                    break;
+                case 'next':
+                    var memberVoiceConnection = bot.voiceConnections.find(vc => vc.channel.equals(message.member.voiceChannel));
+                    playNextSong(memberVoiceConnection, message);
                     break;
                 case 'hi':
                     message.reply("Hi, here's  a pizza -> :pizza:")
@@ -133,3 +171,37 @@ bot.on('message', message => {
         }
     }
 });
+
+var playNextSong = function (memberVoiceConnection, message) {
+    console.log('Called playNextSong');
+    if (dispatcher != null && dispatcher.paused) {
+        dispatcher.resume();
+    } else {
+        if (dispatcher != null && !dispatcher.destroyed) {
+            dispatcher.end();
+        } else {
+            initiateStream(memberVoiceConnection, message);
+        }
+    }
+};
+
+// TODO: fix problems with replying (queue is off by 1)
+var initiateStream = function (memberVoiceConnection, message) {
+    console.log('Called initiateStream');
+    if (queue.length == 0) {
+        message.reply('The queue is empty! Add songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
+    } else {
+        var song = queue.shift();
+        var url = song['url'];
+        var title = song['title'];
+
+        stream = ytdl(url, { filter : 'audioonly' });
+        dispatcher = memberVoiceConnection.playStream(stream, streamOptions);
+        dispatcher.on('end', (reason) => {
+            // NOTE: Very hacky way to get around issue at https://github.com/hydrabolt/discord.js/issues/1387®
+            setTimeout(function () {
+                initiateStream(memberVoiceConnection, message);
+            }, 1000);
+        });
+    }
+};

@@ -77,8 +77,14 @@ body {
   }
 }
 
+#bootstrap-overrides .js-loading *,
+.js-loading *:before,
+.js-loading *:after {
+  animation-play-state: paused !important;
+}
+
 /* Music information section */
-#bootstrap-overrides #default-current-song {
+#bootstrap-overrides #current-song {
     display:table;
 
     text-align: center;
@@ -92,7 +98,7 @@ body {
     border-radius: 5px;
 }
 
-#bootstrap-overrides #default-current-song h3 {
+#bootstrap-overrides #current-song h3 {
     display:table-cell;
     vertical-align:middle;
 

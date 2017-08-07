@@ -20,7 +20,7 @@
   </head>
   <body id="bootstrap-overrides">
       <div class="container">
-        <div class="header clearfix">
+        <div id="header" class="header clearfix initial-animate" style="display: none">
           <nav>
             <ul class="nav nav-pills pull-right">
               <li role="presentation" class="active"><a href="#">Home</a></li>
@@ -31,29 +31,23 @@
           <h3 class="text-muted">Bach Discord Bot</h3>
         </div>
 
-        <div class="jumbotron">
+        <div class="jumbotron initial-animate" style="display: none">
           <h2>Currently Playing:</h2>
-          <div id="current-song" style="display: none">
-          </div>
-          <div id="default-current-song">
-              <h3>Nothing</h3>
-          </div>
+          <div id="current-song">
+              <h3 id="current-song-info" style="display: none"></h3>
+              <h3 id="default-current-song" style="display: none">Nothing</h3>
+              </div>
           <h3>Coming up next:</h3>
           <div id="queue" class="list-group" style="display: none">
           </div>
-          <div id="default-queue">Nothing currently queued.</div>
+          <div id="default-queue" style="display: none">Nothing currently queued.</div>
         </div>
 
-        <div class="jumbotron">
+        <div class="jumbotron initial-animate" style="display: none">
           <h2>Status</h2>
           <div id="joined-channels">
           </div>
         </div>
-
-        <footer class="footer">
-          <p>&copy; 2016 Company, Inc.</p>
-        </footer>
-
       </div> <!-- /container -->
   </body>
 </html>

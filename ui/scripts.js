@@ -1,46 +1,53 @@
 var queue = [];
 var currentSong;
+var firstRun = true;
+var $fadeDivsIn;
 
-$(function(){
-    $('#select_link').click(function(e){
-        e.preventDefault();
-        console.log('select_link clicked');
+$(document).ready(function () {
+    $fadeDivsIn = $('body .container div.initial-animate');
+    var fadeInTime = 0;
 
-         /*$.ajax({
-            dataType: 'jsonp',
-            data: "data=yeah",
-            jsonp: 'callback',
-            url: 'http://localhost:3000/endpoint?callback=?',
-            success: function(data) {
-                console.log('success');
-                console.log(JSON.stringify(data));
-            }
-        });*/
-        var data = {};
-        data.title = "title";
-        data.message = "message";
+    // Stagger initial fade in animation
+    $fadeDivsIn.each(function (index, value) {
+        var $targetDiv = $(value);
+        setTimeout(function () {
+            $targetDiv.fadeIn();
+        }, fadeInTime);
+        fadeInTime += 500;
 
-        // TODO: Need visual indication of syncing
-        $.ajax({
-            type: 'GET',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            url: 'http://localhost:3000/endpoint',
-            success: function(data) {
-                console.log(data);
-                queue = JSON.parse(data);
-                // console.log(queue);
-            }
-        });
-        /*$.ajax('http://localhost:3000/endpoint', {
-                type: 'POST',
-                data: JSON.stringify(data),
-                contentType: 'application/json',
-                success: function() { console.log('success');},
-                error  : function() { console.log('error');}
-        });*/
+        if (index == $fadeDivsIn.length - 1) {
+            setTimeout(pollUpdates, fadeInTime);
+        }
     });
+    // setInterval(pollUpdates, 1000); // TODO: Revert after testing
 });
+
+var updateCurrentSong = function() {
+    var $currentSong = $("#current-song-info");
+    var $defaultCurrentSong = $("#default-current-song");
+
+    if (firstRun) {
+        if (currentSong == '') {
+            $defaultCurrentSong.fadeIn(1000, 'linear');
+        } else {
+            $currentSong.html(currentSong);
+            $currentSong.fadeIn(1000, 'linear');
+        }
+        firstRun = false;
+        return;
+    }
+
+    if ($currentSong.is(":visible") && currentSong == '') {
+        $defaultCurrentSong.fadeIn(200, function () {
+            $currentSong.fadeOut(200);
+        });
+    } else if (!$currentSong.is(":visible") && currentSong != '') {
+        $defaultCurrentSong.fadeOut(200, function () {
+            $currentSong.html(currentSong);
+            $currentSong.fadeIn(200);
+        });
+    }
+};
 
 var updateQueue = function() {
     var $queue = $("#queue");
@@ -72,6 +79,7 @@ var updateQueue = function() {
 
 // Poll the server for updates to the playlist every second.
 var pollUpdates = function () {
+    console.log("Polling")
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
@@ -80,10 +88,9 @@ var pollUpdates = function () {
             console.log(data);
             var payload = JSON.parse(data);
             queue = payload['songs'];
-            currentSong = payload['currentSong'];
+            currentSong = payload['current_song'];
+            updateCurrentSong();
             updateQueue();
         }
     });
 }
-pollUpdates();
-// setInterval(pollUpdates, 1000);

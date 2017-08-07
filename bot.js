@@ -47,10 +47,10 @@ var queue = [{
     'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
     'title' : 'Nickelstats'
 }];
+var currentSong = '';
 
 // Configure express setup
 var app = express();
-var arr  = [];
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -60,10 +60,23 @@ app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname + '/ui/index.html'));
 });
 
-app.post('/endpoint', function(req, res){
+app.get('/endpoint', function(req, res){
 	var obj = {};
-	console.log('body: ' + JSON.stringify(req.body));
-	res.send(req.body);
+    obj['songs'] = queue;
+    obj['current_song'] = currentSong;
+    var status = {
+        'connections' : {},
+    };
+    bot.voiceConnections.forEach(function (entry) {
+        var channel = entry.channel;
+        if (channel.guild.name in status['connections']) {
+            status['connections'][channel.guild.name].push(channel.name);
+        } else {
+            status['connections'][channel.guild.name] = [channel.name];
+        }
+    });
+    obj['status'] = status;
+	res.send(JSON.stringify(obj));
 });
 
 app.listen(settings.listenOnPort);
@@ -216,9 +229,9 @@ var initiateStream = function (memberVoiceConnection, message) {
     if (queue.length == 0) {
         message.reply('The queue is empty! Add songs with \'' + settings.triggerPhrase + ' queue __youtube_url__\'');
     } else {
-        var song = queue.shift();
-        var url = song['url'];
-        var title = song['title'];
+        currentSong = queue.shift();
+        var url = currentSong['url'];
+        var title = currentSong['title'];
 
         stream = ytdl(url, { filter : 'audioonly' });
         dispatcher = memberVoiceConnection.playStream(stream, streamOptions);

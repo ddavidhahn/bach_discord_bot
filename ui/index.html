@@ -1,11 +1,59 @@
-<html>
-	<head>
-		<title>jsonp test</title>
-		<script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
-        <script src="scripts.js"></script>
-        <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> -->
-    </head>
-    <body>
-        <div id="select_div"><a href="#" id="select_link">Test</a></div>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Bach Discord Bot</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <!-- Custom scripts and stylesheets -->
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./scripts.js"></script>
+  </head>
+  <body id="bootstrap-overrides">
+      <div class="container">
+        <div class="header clearfix">
+          <nav>
+            <ul class="nav nav-pills pull-right">
+              <li role="presentation" class="active"><a href="#">Home</a></li>
+              <li role="presentation"><a href="#">About</a></li>
+              <li role="presentation"><a href="#">Contact</a></li>
+            </ul>
+          </nav>
+          <h3 class="text-muted">Bach Discord Bot</h3>
+        </div>
+
+        <div class="jumbotron">
+          <h2>Currently Playing:</h2>
+          <div id="current-song" style="display: none">
+          </div>
+          <div id="default-current-song">
+              <h3>Nothing</h3>
+          </div>
+          <h3>Coming up next:</h3>
+          <div id="queue" class="list-group" style="display: none">
+          </div>
+          <div id="default-queue">Nothing currently queued.</div>
+        </div>
+
+        <div class="jumbotron">
+          <h2>Status</h2>
+          <div id="joined-channels">
+          </div>
+        </div>
+
+        <footer class="footer">
+          <p>&copy; 2016 Company, Inc.</p>
+        </footer>
+
+      </div> <!-- /container -->
+  </body>
 </html>

@@ -47,7 +47,7 @@ var queue = [{
     'url' : "https://www.youtube.com/watch?v=sz2mmM-kN1I",
     'title' : 'Nickelstats'
 }];
-var currentSong = 'Testtest';
+var currentSong = {'title': 'Testtest', 'url': "youtube.com"};
 
 // Configure express setup
 var app = express();
@@ -76,6 +76,7 @@ app.get('/endpoint', function(req, res){
         }
     });
     obj['status'] = status;
+    console.log(obj);
 	res.send(JSON.stringify(obj));
 });
 

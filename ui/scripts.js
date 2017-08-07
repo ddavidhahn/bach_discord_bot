@@ -1,5 +1,6 @@
 var queue = [];
 var currentSong;
+var previousSong;
 var firstRun = true;
 var $fadeDivsIn;
 
@@ -20,9 +21,23 @@ $(document).ready(function () {
         }
     });
     // setInterval(pollUpdates, 1000); // TODO: Revert after testing
+
+    $('#queue').on('click', 'li.song-entry', function () {
+        window.open($(this).attr('data-url'));
+    });
+
+    $('#current-song').on('click', 'h3#current-song-info', function () {
+        window.open($(this).attr('data-url'));
+    })
 });
 
 var updateCurrentSong = function() {
+    var generateCurrentSongHTML = function (s) {
+        var html = "";
+        html += s.title;
+        return html;
+    };
+
     var $currentSong = $("#current-song-info");
     var $defaultCurrentSong = $("#default-current-song");
 
@@ -30,7 +45,8 @@ var updateCurrentSong = function() {
         if (currentSong == '') {
             $defaultCurrentSong.fadeIn(1000, 'linear');
         } else {
-            $currentSong.html(currentSong);
+            $currentSong.html(generateCurrentSongHTML(currentSong));
+            $currentSong.attr('data-url', currentSong.url);
             $currentSong.fadeIn(1000, 'linear');
         }
         firstRun = false;
@@ -43,9 +59,16 @@ var updateCurrentSong = function() {
         });
     } else if (!$currentSong.is(":visible") && currentSong != '') {
         $defaultCurrentSong.fadeOut(200, function () {
-            $currentSong.html(currentSong);
+            $currentSong.html(generateCurrentSongHTML(currentSong));
+            $currentSong.attr('data-url', currentSong.url);
             $currentSong.fadeIn(200);
         });
+    } else if (previousSong == null || previousSong.title != currentSong.title || previousSong.url != currentSong.url){
+        $currentSong.fadeOut(200, function () {
+            $currentSong.html(generateCurrentSongHTML(currentSong));
+            $currentSong.attr('data-url', currentSong.url);
+            $currentSong.fadeIn(200);
+        })
     }
 };
 
@@ -54,7 +77,7 @@ var updateQueue = function() {
     if (queue.length > 0) {
         var htmlString = "";
         queue.forEach(function(song) {
-            htmlString += '<li class="list-group-item clearfix song-entry">' +
+            htmlString += '<li class="list-group-item clearfix song-entry" data-url="' + song.url + '">' +
                 '<span class="pull-left">' + song.title + '</span>' +
                 // '<span class="pull-right">' +
                     // '<span class="glyphicon glyphicon-play-circle" aria-hidden="true"></span>' +
@@ -88,6 +111,7 @@ var pollUpdates = function () {
             console.log(data);
             var payload = JSON.parse(data);
             queue = payload['songs'];
+            previousSong = currentSong;
             currentSong = payload['current_song'];
             updateCurrentSong();
             updateQueue();
